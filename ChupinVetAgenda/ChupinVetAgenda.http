@@ -1,0 +1,6 @@
+@ChupinVetAgenda_HostAddress = http://localhost:5139
+
+GET {{ChupinVetAgenda_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

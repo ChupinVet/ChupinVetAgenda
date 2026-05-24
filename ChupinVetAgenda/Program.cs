@@ -6,9 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // EF Core + SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(
-        "Data Source=vetagenda.db"
-    )
+    options.UseOracle(builder.Configuration.GetConnectionString(
+        "OracleConnection"
+        ))
 );
 
 //Controllers

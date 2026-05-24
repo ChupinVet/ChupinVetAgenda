@@ -55,6 +55,7 @@ O sistema permite que veterinários disponibilizem horários para atendimento e 
 - Visualização para veterinário
 - Atualizar agendamentos
 - Cancelar agendamentos
+- Simulação de envio de e-mail para novos agendamentos
 
 ---
 
@@ -224,3 +225,14 @@ DELETE /api/Agendamentos/{id}
 http://localhost:5139/swagger
 ```
    - A porta pode variar
+
+# Melhorias Futuras
+
+- Integração com frontend mobile/web
+- Sistema real de envio de e-mails
+- Notificações automáticas para consultas
+- Histórico de atendimentos dos pets
+
+# Observações
+
+O sistema de envio de e-mails foi implementado apenas de forma simulada para demonstração da lógica de negócio da aplicação.

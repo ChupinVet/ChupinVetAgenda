@@ -228,7 +228,7 @@ DELETE /api/Agendamentos/{id}
 
 # Melhorias Futuras
 
-- Integração com frontend mobile/web
+- Integração com nosso app mobile (ChupinVet)
 - Sistema real de envio de e-mails
 - Notificações automáticas para consultas
 - Histórico de atendimentos dos pets

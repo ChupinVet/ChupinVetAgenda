@@ -18,6 +18,7 @@ public class HorariosController : ControllerBase
     
     // GET: api/horarios
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<HorarioDisponivel>>>
         GetHorarios()
     {
@@ -27,6 +28,7 @@ public class HorariosController : ControllerBase
     
     // GET: api/horarios/disponiveis
     [HttpGet("disponiveis")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<HorarioDisponivel>>>
         GetDisponiveis()
     {
@@ -37,6 +39,8 @@ public class HorariosController : ControllerBase
     
     //GET: api/horarios/{id}
     [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<HorarioDisponivel>>
         GetHorario(int id)
     {
@@ -54,6 +58,8 @@ public class HorariosController : ControllerBase
     
     //POST: api/horarios
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<HorarioDisponivel>>
         PostHorario(HorarioDisponivel horario)
     {
@@ -70,6 +76,9 @@ public class HorariosController : ControllerBase
     
     // PUT: api/horarios/{id}
     [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult>
         PutHorario(
             int id,
@@ -101,6 +110,9 @@ public class HorariosController : ControllerBase
     
     //DELETE: api/horarios/{id}
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult>
         DeleteHorario(int id)
     {

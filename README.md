@@ -221,9 +221,9 @@ DELETE /api/Agendamentos/{id}
    - Abrir o projeto no Rider e executar a aplicação utilizando o botão Run
 5. Acessar o Swagger
    - Após iniciar a API, acessar:
-```Bash
-http://localhost:5139/swagger
-```
+   ```Bash
+    http://localhost:5139/swagger
+   ```
    - A porta pode variar
 
 # Melhorias Futuras

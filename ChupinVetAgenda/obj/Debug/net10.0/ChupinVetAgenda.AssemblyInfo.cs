@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ChupinVetAgenda")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6c71606f6b9e50ce01dd2bf292a8af3bc142c59f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+73550231eb79c231106ebf668e816996568d142c")]
 [assembly: System.Reflection.AssemblyProductAttribute("ChupinVetAgenda")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ChupinVetAgenda")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

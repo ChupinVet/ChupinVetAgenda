@@ -113,6 +113,19 @@ public class HorariosController : ControllerBase
             return NotFound();
         }
 
+        var possuiAgendamento =
+            await _context.Agendamentos
+                .AnyAsync(a =>
+                    a.HorarioDisponivelId == id
+                );
+
+        if (possuiAgendamento)
+        {
+            return BadRequest(
+                "Nao e possivel remover um horario ocupado."
+            );
+        }
+
         _context.HorariosDisponiveis
             .Remove(horario);
         

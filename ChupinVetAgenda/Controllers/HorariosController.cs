@@ -10,10 +10,12 @@ namespace ChupinVetAgenda.Controllers;
 public class HorariosController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<HorariosController> _logger;
     
-    public HorariosController(AppDbContext context)
+    public HorariosController(AppDbContext context, ILogger<HorariosController> logger)
     {
         _context = context;
+        _logger = logger;
     }
     
     // GET: api/horarios
@@ -22,6 +24,8 @@ public class HorariosController : ControllerBase
     public async Task<ActionResult<IEnumerable<HorarioDisponivel>>>
         GetHorarios()
     {
+        _logger.LogInformation("Listando todos os horarios.");
+        
         return await _context.HorariosDisponiveis
             .ToListAsync();
     }
@@ -32,6 +36,8 @@ public class HorariosController : ControllerBase
     public async Task<ActionResult<IEnumerable<HorarioDisponivel>>>
         GetDisponiveis()
     {
+        _logger.LogInformation("Listando horarios disponiveis.");
+        
         return await _context.HorariosDisponiveis
             .Where(h => h.Status == "Disponivel")
             .ToListAsync();
@@ -50,6 +56,11 @@ public class HorariosController : ControllerBase
 
         if (horario == null)
         {
+            _logger.LogWarning(
+                "Horario com id {Id} nao encontrado.",
+                id
+            );
+
             return NotFound();
         }
 
@@ -60,18 +71,38 @@ public class HorariosController : ControllerBase
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<HorarioDisponivel>>
         PostHorario(HorarioDisponivel horario)
     {
-        _context.HorariosDisponiveis.Add(horario);
+        try
+        {
+            _context.HorariosDisponiveis.Add(horario);
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-        return CreatedAtAction(
-            nameof(GetHorario),
-            new { id = horario.Id },
-            horario
-        );
+            _logger.LogInformation(
+                "Horario criado com id {Id}.",
+                horario.Id
+            );
+
+            return CreatedAtAction(
+                nameof(GetHorario),
+                new { id = horario.Id },
+                horario
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Erro ao criar horario."
+            );
+
+            return StatusCode(
+                StatusCodes.Status500InternalServerError
+            );
+        }
     }
     
     // PUT: api/horarios/{id}
@@ -80,33 +111,43 @@ public class HorariosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult>
-        PutHorario(
-            int id,
-            HorarioDisponivel horario
-        )
-    {
-        var horarioExistente =
-            await _context.HorariosDisponiveis
-                .FindAsync(id);
-
-        if (horarioExistente == null)
+            PutHorario(
+                int id,
+                HorarioDisponivel horario
+            )
         {
-            return NotFound();
+            var horarioExistente =
+                await _context.HorariosDisponiveis
+                    .FindAsync(id);
+    
+            if (horarioExistente == null)
+            {
+                _logger.LogWarning(
+                    "Tentativa de atualizar horario inexistente. Id: {Id}.",
+                    id
+                );
+    
+                return NotFound();
+            }
+            
+            horarioExistente.DataHora =
+                horario.DataHora;
+            
+            horarioExistente.TipoAtendimento =
+                horario.TipoAtendimento;
+            
+            horarioExistente.Status =
+                horario.Status;
+            
+            await _context.SaveChangesAsync();
+    
+            _logger.LogInformation(
+                "Horario com id {Id} atualizado.",
+                id
+            );
+            
+            return NoContent();
         }
-        
-        horarioExistente.DataHora =
-            horario.DataHora;
-        
-        horarioExistente.TipoAtendimento =
-            horario.TipoAtendimento;
-        
-        horarioExistente.Status =
-            horario.Status;
-        
-        await _context.SaveChangesAsync();
-        
-        return NoContent();
-    }
     
     //DELETE: api/horarios/{id}
     [HttpDelete("{id}")]
@@ -122,6 +163,11 @@ public class HorariosController : ControllerBase
 
         if (horario == null)
         {
+            _logger.LogWarning(
+                "Tentativa de remover horario inexistente. Id: {Id}.",
+                id
+            );
+
             return NotFound();
         }
 
@@ -133,6 +179,11 @@ public class HorariosController : ControllerBase
 
         if (possuiAgendamento)
         {
+            _logger.LogWarning(
+                "Tentativa de remover horario ocupado. Id: {Id}.",
+                id
+            );
+
             return BadRequest(
                 "Nao e possivel remover um horario ocupado."
             );
@@ -142,6 +193,11 @@ public class HorariosController : ControllerBase
             .Remove(horario);
         
         await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Horario com id {Id} removido.",
+            id
+        );
         
         return NoContent();
     }

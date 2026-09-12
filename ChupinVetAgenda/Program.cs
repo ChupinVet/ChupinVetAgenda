@@ -1,15 +1,37 @@
 using ChupinVetAgenda.Data;
 using ChupinVetAgenda.Services;
+using ChupinVetAgenda.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// EF Core + SQLite
+// Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        "logs/chupinvet-.txt",
+        rollingInterval: RollingInterval.Day
+    )
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+// EF Core + Oracle
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString(
         "OracleConnection"
         ))
 );
+
+// Health Checks
+builder.Services.AddHttpClient<ExternalServiceHealthCheck>();
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>("Oracle")
+    .AddCheck<ExternalServiceHealthCheck>("ServicoExterno");
 
 //Controllers
 builder.Services.AddControllers();
@@ -23,6 +45,24 @@ builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
+// Correlation ID
+app.Use(async (context, next) =>
+{
+    var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault()
+                        ?? Guid.NewGuid().ToString();
+
+    context.Response.Headers["X-Correlation-ID"] = correlationId;
+
+    using (Serilog.Context.LogContext.PushProperty(
+               "CorrelationId", correlationId))
+    {
+        await next();
+    }
+});
+
+// Logging das requisições
+app.UseSerilogRequestLogging();
+
 //Swagger
 if (app.Environment.IsDevelopment())
 {
@@ -33,5 +73,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health");
 
 app.Run();

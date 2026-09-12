@@ -1,0 +1,17 @@
+# .NET
+bin/
+obj/
+
+# Rider / JetBrains
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Visual Studio
+.vs/
+
+# User-specific files
+*.user
+*.suo

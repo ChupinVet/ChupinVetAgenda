@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChupinVetAgenda", "ChupinVe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChupinVetAgenda.Tests.Unit", "ChupinVetAgenda.Tests.Unit\ChupinVetAgenda.Tests.Unit.csproj", "{37A03F65-A0F7-4AD9-8C01-D014B871AD6E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChupinVetAgenda.Tests.Integration", "ChupinVetAgenda.Tests.Integration\ChupinVetAgenda.Tests.Integration.csproj", "{495A51F1-DF30-4E26-AAC2-B301B2F828C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,18 @@ Global
 		{37A03F65-A0F7-4AD9-8C01-D014B871AD6E}.Release|x64.Build.0 = Release|Any CPU
 		{37A03F65-A0F7-4AD9-8C01-D014B871AD6E}.Release|x86.ActiveCfg = Release|Any CPU
 		{37A03F65-A0F7-4AD9-8C01-D014B871AD6E}.Release|x86.Build.0 = Release|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Debug|x64.Build.0 = Debug|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Debug|x86.Build.0 = Debug|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Release|x64.ActiveCfg = Release|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Release|x64.Build.0 = Release|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Release|x86.ActiveCfg = Release|Any CPU
+		{495A51F1-DF30-4E26-AAC2-B301B2F828C5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

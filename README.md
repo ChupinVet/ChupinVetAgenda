@@ -309,7 +309,7 @@ Foram implementados testes para cenários como:
 
 ## Testes de Integração
 
-Os testes de integração utilizam `WebApplicationFactory` para executar a aplicação em ambiente de teste.
+Os testes de integração utilizam `WebApplicationFactory` para executar a aplicação em ambiente de teste, além de Fixtures e Collection Fixtures do xUnit para compartilhar o contexto da aplicação e o cliente HTTP entre os testes.
 
 Foram implementados testes para:
 

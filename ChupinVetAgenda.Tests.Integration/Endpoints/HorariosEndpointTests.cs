@@ -1,19 +1,24 @@
 ﻿using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
+using ChupinVetAgenda.Tests.Integration.Fixtures;
 
 namespace ChupinVetAgenda.Tests.Integration.Endpoints;
 
+[Collection("IntegrationTests")]
 public class HorariosEndpointTests
 {
+    private readonly IntegrationTestFixture _fixture;
+
+    public HorariosEndpointTests(
+        IntegrationTestFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task GetHorarios_RequisicaoValida_RetornaOk()
     {
         // Arrange
-        await using var factory =
-            new WebApplicationFactory<Program>();
-
-        var client =
-            factory.CreateClient();
+        var client = _fixture.Client;
 
         // Act
         var response =
@@ -30,11 +35,7 @@ public class HorariosEndpointTests
     public async Task GetHorario_IdInexistente_RetornaNotFound()
     {
         // Arrange
-        await using var factory =
-            new WebApplicationFactory<Program>();
-
-        var client =
-            factory.CreateClient();
+        var client = _fixture.Client;
 
         // Act
         var response =
@@ -47,5 +48,5 @@ public class HorariosEndpointTests
             HttpStatusCode.NotFound,
             response.StatusCode
         );
-    } 
+    }
 }

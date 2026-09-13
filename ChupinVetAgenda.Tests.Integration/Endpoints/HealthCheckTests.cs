@@ -1,19 +1,24 @@
 ﻿using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
+using ChupinVetAgenda.Tests.Integration.Fixtures;
 
 namespace ChupinVetAgenda.Tests.Integration.Endpoints;
 
+[Collection("IntegrationTests")]
 public class HealthCheckTests
 {
+    private readonly IntegrationTestFixture _fixture;
+
+    public HealthCheckTests(
+        IntegrationTestFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task HealthCheck_AplicacaoSaudavel_RetornaOk()
     {
         // Arrange
-        await using var factory =
-            new WebApplicationFactory<Program>();
-
-        var client =
-            factory.CreateClient();
+        var client = _fixture.Client;
 
         // Act
         var response =

@@ -76,8 +76,32 @@ public class AgendamentosController : ControllerBase
 
             return NotFound();
         }
-
-        return Ok(agendamento);
+        
+        return Ok(new
+        {
+            dados = agendamento,
+            links = new[]
+            {
+                new
+                {
+                    rel = "self",
+                    href = Url.ActionLink(nameof(GetAgendamento), values: new { id }),
+                    method = "GET"
+                },
+                new
+                {
+                    rel = "atualizar",
+                    href = Url.ActionLink(nameof(PutAgendamento), values: new { id }),
+                    method = "PUT"
+                },
+                new
+                {
+                    rel = "excluir",
+                    href = Url.ActionLink(nameof(DeleteAgendamento), values: new { id }),
+                    method = "DELETE"
+                }
+            }
+        });
     }
 
     // GET: api/agendamentos/responsavel/{email}

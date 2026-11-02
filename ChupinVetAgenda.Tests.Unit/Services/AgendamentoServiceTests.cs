@@ -65,7 +65,6 @@ public class AgendamentoServiceTests
     {
         // Arrange
         using var context = CriarContexto();
-
         
         for (int i = 1; i <= 5; i++)
         {
@@ -114,5 +113,119 @@ public class AgendamentoServiceTests
         Assert.Equal(2, itens.Count);
         Assert.Equal(3, itens[0].Id);
         Assert.Equal(4, itens[1].Id);
+    }
+    
+    [Fact]
+    public async Task ConsultarAsync_FiltrarPorEspecie_RetornaApenasCachorros()
+    {
+        // Arrange
+        using var context = CriarContexto();
+
+        var especies = new[] { "Cachorro", "Gato", "Cachorro" };
+
+        for (int i = 0; i < especies.Length; i++)
+        {
+            var horario = new HorarioDisponivel
+            {
+                Id = i + 1,
+                DataHora = DateTime.Now.AddDays(i + 1),
+                TipoAtendimento = "Consulta",
+                Status = "Ocupado"
+            };
+
+            context.HorariosDisponiveis.Add(horario);
+
+            context.Agendamentos.Add(new Agendamento
+            {
+                Id = i + 1,
+                HorarioDisponivelId = horario.Id,
+                HorarioDisponivel = horario,
+                NomeResponsavel = "Responsavel",
+                EmailResponsavel = "teste@email.com",
+                NomePet = $"Pet {i + 1}",
+                EspeciePet = especies[i],
+                Status = "Marcado"
+            });
+        }
+
+        await context.SaveChangesAsync();
+
+        var service = new AgendamentoService(
+            context,
+            new EmailService()
+        );
+
+        // Act
+        var (itens, total) = await service.ConsultarAsync(
+            pagina: 1,
+            tamanhoPagina: 10,
+            status: null,
+            especie: "Cachorro",
+            ordenarPor: null,
+            descendente: false
+        );
+
+        // Assert
+        Assert.Equal(2, total);
+        Assert.Equal(2, itens.Count);
+        Assert.All(itens, a => Assert.Equal("Cachorro", a.EspeciePet));
+    }
+    
+    [Fact]
+    public async Task ConsultarAsync_OrdenarPorNomePet_RetornaOrdemAlfabetica()
+    {
+        // Arrange
+        using var context = CriarContexto();
+
+        var nomes = new[] { "Thor", "Bob", "Mel" };
+
+        for (int i = 0; i < nomes.Length; i++)
+        {
+            var horario = new HorarioDisponivel
+            {
+                Id = i + 1,
+                DataHora = DateTime.Now.AddDays(i + 1),
+                TipoAtendimento = "Consulta",
+                Status = "Ocupado"
+            };
+
+            context.HorariosDisponiveis.Add(horario);
+
+            context.Agendamentos.Add(new Agendamento
+            {
+                Id = i + 1,
+                HorarioDisponivelId = horario.Id,
+                HorarioDisponivel = horario,
+                NomeResponsavel = "Responsavel",
+                EmailResponsavel = "teste@email.com",
+                NomePet = nomes[i],
+                EspeciePet = "Cachorro",
+                Status = "Marcado"
+            });
+        }
+
+        await context.SaveChangesAsync();
+
+        var service = new AgendamentoService(
+            context,
+            new EmailService()
+        );
+
+        // Act
+        var (itens, total) = await service.ConsultarAsync(
+            pagina: 1,
+            tamanhoPagina: 10,
+            status: null,
+            especie: null,
+            ordenarPor: "nomepet",
+            descendente: false
+        );
+
+        // Assert
+        Assert.Equal(3, total);
+        Assert.Equal(
+            new[] { "Bob", "Mel", "Thor" },
+            itens.Select(a => a.NomePet).ToArray()
+        );
     }
 }

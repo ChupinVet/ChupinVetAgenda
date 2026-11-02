@@ -17,4 +17,13 @@ public interface IAgendamentoService
     Task<bool> AtualizarAsync(int id, Agendamento agendamento);
 
     Task<bool> ExcluirAsync(int id);
+    
+    Task<(List<Agendamento> Itens, int Total)> ConsultarAsync(
+        int pagina,
+        int tamanhoPagina,
+        string? status,
+        string? especie,
+        string? ordenarPor,
+        bool descendente
+    );
 }

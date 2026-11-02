@@ -20,16 +20,45 @@ public class AgendamentosController : ControllerBase
         _logger = logger;
     }
 
+    
     // GET: api/agendamentos
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Agendamento>>> GetAgendamentos()
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAgendamentos(
+        [FromQuery] int pagina = 1,
+        [FromQuery] int tamanhoPagina = 10,
+        [FromQuery] string? status = null,
+        [FromQuery] string? especie = null,
+        [FromQuery] string? ordenarPor = null,
+        [FromQuery] bool descendente = false)
     {
-        _logger.LogInformation("Listando todos os agendamentos.");
+        if (pagina < 1 || tamanhoPagina < 1 || tamanhoPagina > 100)
+        {
+            return BadRequest(
+                "A pagina deve ser maior que zero e o tamanhoPagina deve estar entre 1 e 100.");
+        }
 
-        var agendamentos = await _agendamentoService.ListarTodosAsync();
+        _logger.LogInformation(
+            "Consultando agendamentos. Pagina: {Pagina}, Tamanho: {TamanhoPagina}",
+            pagina, tamanhoPagina);
 
-        return Ok(agendamentos);
+        var (itens, total) = await _agendamentoService.ConsultarAsync(
+            pagina,
+            tamanhoPagina,
+            status,
+            especie,
+            ordenarPor,
+            descendente);
+
+        return Ok(new
+        {
+            pagina,
+            tamanhoPagina,
+            total,
+            totalPaginas = (int)Math.Ceiling((double)total / tamanhoPagina),
+            itens
+        });
     }
 
     // GET: api/agendamentos/{id}

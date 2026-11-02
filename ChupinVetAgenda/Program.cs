@@ -8,6 +8,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using ChupinVetAgenda.Services.Interfaces;
 using ChupinVetAgenda.Services.Implementations;
+using ChupinVetAgenda.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +75,9 @@ builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
 builder.Services.AddScoped<IHorarioService, HorarioService>();
 
 var app = builder.Build();
+
+// Tratamento global de exceções
+app.UseMiddleware<ExceptionMiddleware>();
 
 // Correlation ID
 app.Use(async (context, next) =>

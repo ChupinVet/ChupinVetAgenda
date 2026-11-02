@@ -58,4 +58,61 @@ public class AgendamentoServiceTests
         Assert.Empty(context.Agendamentos);
         Assert.Equal("Ocupado", horario.Status);
     }
+    
+    
+    [Fact]
+    public async Task ConsultarAsync_ComPaginacao_RetornaItensCorretos()
+    {
+        // Arrange
+        using var context = CriarContexto();
+
+        
+        for (int i = 1; i <= 5; i++)
+        {
+            var horario = new HorarioDisponivel
+            {
+                Id = i,
+                DataHora = DateTime.Now.AddDays(i),
+                TipoAtendimento = "Consulta",
+                Status = "Ocupado"
+            };
+
+            context.HorariosDisponiveis.Add(horario);
+
+            context.Agendamentos.Add(new Agendamento
+            {
+                Id = i,
+                HorarioDisponivelId = i,
+                HorarioDisponivel = horario,
+                NomeResponsavel = "Responsavel " + i,
+                EmailResponsavel = $"teste{i}@email.com",
+                NomePet = "Pet " + i,
+                EspeciePet = "Cachorro",
+                Status = "Marcado"
+            });
+        }
+
+        await context.SaveChangesAsync();
+
+        var service = new AgendamentoService(
+            context,
+            new EmailService()
+        );
+
+        // Act
+        var (itens, total) = await service.ConsultarAsync(
+            pagina: 2,
+            tamanhoPagina: 2,
+            status: null,
+            especie: null,
+            ordenarPor: null,
+            descendente: false
+        );
+
+        // Assert
+        Assert.Equal(5, total);
+        Assert.Equal(2, itens.Count);
+        Assert.Equal(3, itens[0].Id);
+        Assert.Equal(4, itens[1].Id);
+    }
 }

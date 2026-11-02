@@ -119,4 +119,68 @@ public class AgendamentoService : IAgendamentoService
 
         return true;
     }
+    
+    
+    public async Task<(List<Agendamento> Itens, int Total)> ConsultarAsync(
+        int pagina,
+        int tamanhoPagina,
+        string? status,
+        string? especie,
+        string? ordenarPor,
+        bool descendente)
+    {
+        // Consulta inicial
+        var consulta = _context.Agendamentos
+            .Include(a => a.HorarioDisponivel)
+            .AsNoTracking()
+            .AsQueryable();
+
+        // Filtros
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            consulta = consulta.Where(a => a.Status == status);
+        }
+
+        if (!string.IsNullOrWhiteSpace(especie))
+        {
+            consulta = consulta.Where(a => a.EspeciePet == especie);
+        }
+
+        // Total de registros antes da paginacao
+        var total = await consulta.CountAsync();
+
+        // Ordenacao
+        consulta = ordenarPor?.ToLowerInvariant() switch
+        {
+            "nomepet" => descendente
+                ? consulta.OrderByDescending(a => a.NomePet)
+                    .ThenBy(a => a.Id)
+                : consulta.OrderBy(a => a.NomePet)
+                    .ThenBy(a => a.Id),
+
+            "nomeresponsavel" => descendente
+                ? consulta.OrderByDescending(a => a.NomeResponsavel)
+                    .ThenBy(a => a.Id)
+                : consulta.OrderBy(a => a.NomeResponsavel)
+                    .ThenBy(a => a.Id),
+
+            "status" => descendente
+                ? consulta.OrderByDescending(a => a.Status)
+                    .ThenBy(a => a.Id)
+                : consulta.OrderBy(a => a.Status)
+                    .ThenBy(a => a.Id),
+
+            _ => descendente
+                ? consulta.OrderByDescending(a => a.Id)
+                : consulta.OrderBy(a => a.Id)
+        };
+
+        // Paginacao
+        var itens = await consulta
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
+            .ToListAsync();
+
+        return (itens, total);
+    }
 }

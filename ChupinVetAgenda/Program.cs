@@ -6,6 +6,8 @@ using Serilog;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using ChupinVetAgenda.Services.Interfaces;
+using ChupinVetAgenda.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,6 +66,12 @@ builder.Services.AddSwaggerGen();
 
 //Email
 builder.Services.AddScoped<EmailService>();
+
+//Services - Agendamento
+builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
+
+//Services - Horário
+builder.Services.AddScoped<IHorarioService, HorarioService>();
 
 var app = builder.Build();
 

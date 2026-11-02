@@ -1,9 +1,8 @@
 ﻿using ChupinVetAgenda.Controllers;
-using ChupinVetAgenda.Data;
 using ChupinVetAgenda.Models;
-using ChupinVetAgenda.Services;
+using ChupinVetAgenda.Services.Exceptions;
+using ChupinVetAgenda.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -11,47 +10,14 @@ namespace ChupinVetAgenda.Tests.Unit.Controllers;
 
 public class AgendamentosControllerTests
 {
-    private AppDbContext CriarContexto()
-    {
-        var options =
-            new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(
-                    databaseName: Guid.NewGuid().ToString()
-                )
-                .Options;
-
-        return new AppDbContext(options);
-    }
-
     [Fact]
     public async Task PostAgendamento_HorarioIndisponivel_RetornaBadRequest()
     {
         // Arrange
-        var context = CriarContexto();
+        var serviceMock = new Mock<IAgendamentoService>();
 
-        var logger =
+        var loggerMock =
             new Mock<ILogger<AgendamentosController>>();
-
-        var emailService =
-            new EmailService();
-
-        var horario = new HorarioDisponivel
-        {
-            Id = 1,
-            DataHora = new DateTime(2026, 9, 20, 10, 0, 0),
-            TipoAtendimento = "Consulta",
-            Status = "Ocupado"
-        };
-
-        context.HorariosDisponiveis.Add(horario);
-        await context.SaveChangesAsync();
-
-        var controller =
-            new AgendamentosController(
-                context,
-                emailService,
-                logger.Object
-            );
 
         var agendamento = new Agendamento
         {
@@ -63,11 +29,20 @@ public class AgendamentosControllerTests
             Status = "Marcado"
         };
 
+        serviceMock
+            .Setup(s => s.CriarAsync(
+                It.IsAny<Agendamento>()))
+            .ThrowsAsync(
+                new HorarioIndisponivelException());
+
+        var controller = new AgendamentosController(
+            serviceMock.Object,
+            loggerMock.Object
+        );
+
         // Act
         var resultado =
-            await controller.PostAgendamento(
-                agendamento
-            );
+            await controller.PostAgendamento(agendamento);
 
         // Assert
         var badRequest =
@@ -79,5 +54,10 @@ public class AgendamentosControllerTests
             "Horario indisponivel",
             badRequest.Value
         );
-    }    
+
+        serviceMock.Verify(
+            s => s.CriarAsync(agendamento),
+            Times.Once
+        );
+    }
 }

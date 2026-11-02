@@ -50,14 +50,45 @@ public class AgendamentosController : ControllerBase
             especie,
             ordenarPor,
             descendente);
+        
+        var totalPaginas = (int)Math.Ceiling((double)total / tamanhoPagina);
+
+        string? CriarLinkPagina(int numeroPagina)
+        {
+            return Url.ActionLink(
+                nameof(GetAgendamentos),
+                values: new
+                {
+                    pagina = numeroPagina,
+                    tamanhoPagina,
+                    status,
+                    especie,
+                    ordenarPor,
+                    descendente
+                });
+        }
 
         return Ok(new
         {
             pagina,
             tamanhoPagina,
             total,
-            totalPaginas = (int)Math.Ceiling((double)total / tamanhoPagina),
-            itens
+            totalPaginas,
+            itens,
+            links = new
+            {
+                self = CriarLinkPagina(pagina),
+                primeira = CriarLinkPagina(1),
+                anterior = pagina > 1
+                    ? CriarLinkPagina(pagina - 1)
+                    : null,
+                proxima = pagina < totalPaginas
+                    ? CriarLinkPagina(pagina + 1)
+                    : null,
+                ultima = totalPaginas > 0
+                    ? CriarLinkPagina(totalPaginas)
+                    : null
+            }
         });
     }
 

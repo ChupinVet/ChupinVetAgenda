@@ -246,4 +246,170 @@ public class AgendamentoServiceTests
             itens.Select(a => a.NomePet).ToArray()
         );
     }
+    
+    [Fact]
+    public async Task AtualizarAsync_AgendamentoInexistente_RetornaFalse()
+    {
+        // Arrange
+        using var context = CriarContexto();
+
+        var agendamentoRepository = new AgendamentoRepository(context);
+        var horarioRepository = new HorarioRepository(context);
+
+        var service = new AgendamentoService(
+            agendamentoRepository,
+            horarioRepository,
+            new EmailService()
+        );
+
+        var agendamento = new Agendamento
+        {
+            NomeResponsavel = "Maria",
+            EmailResponsavel = "maria@email.com",
+            NomePet = "Mel",
+            EspeciePet = "Gato",
+            Status = "Marcado"
+        };
+
+        // Act
+        var resultado = await service.AtualizarAsync(999999, agendamento);
+
+        // Assert
+        Assert.False(resultado);
+        Assert.Empty(context.Agendamentos);
+    }
+    
+    [Fact]
+    public async Task AtualizarAsync_AgendamentoExistente_AtualizaDadosERetornaTrue()
+    {
+        // Arrange
+        using var context = CriarContexto();
+
+        var horario = new HorarioDisponivel
+        {
+            Id = 1,
+            DataHora = new DateTime(2026, 12, 10, 10, 0, 0),
+            TipoAtendimento = "Consulta",
+            Status = "Ocupado"
+        };
+
+        context.HorariosDisponiveis.Add(horario);
+
+        var agendamentoExistente = new Agendamento
+        {
+            Id = 1,
+            HorarioDisponivelId = 1,
+            NomeResponsavel = "Maria",
+            EmailResponsavel = "maria@email.com",
+            NomePet = "Thor",
+            EspeciePet = "Cachorro",
+            Status = "Marcado"
+        };
+
+        context.Agendamentos.Add(agendamentoExistente);
+        await context.SaveChangesAsync();
+
+        var service = new AgendamentoService(
+            new AgendamentoRepository(context),
+            new HorarioRepository(context),
+            new EmailService()
+        );
+
+        var novosDados = new Agendamento
+        {
+            NomeResponsavel = "Ana",
+            EmailResponsavel = "ana@email.com",
+            NomePet = "Mel",
+            EspeciePet = "Gato",
+            Status = "Confirmado"
+        };
+
+        // Act
+        var resultado = await service.AtualizarAsync(1, novosDados);
+
+        // Assert
+        Assert.True(resultado);
+
+        context.ChangeTracker.Clear();
+
+        var atualizado = await context.Agendamentos.FindAsync(1);
+
+        Assert.NotNull(atualizado);
+        Assert.Equal("Ana", atualizado.NomeResponsavel);
+        Assert.Equal("ana@email.com", atualizado.EmailResponsavel);
+        Assert.Equal("Mel", atualizado.NomePet);
+        Assert.Equal("Gato", atualizado.EspeciePet);
+        Assert.Equal("Confirmado", atualizado.Status);
+    }
+    
+    [Fact]
+    public async Task ExcluirAsync_AgendamentoInexistente_RetornaFalse()
+    {
+        // Arrange
+        using var context = CriarContexto();
+
+        var service = new AgendamentoService(
+            new AgendamentoRepository(context),
+            new HorarioRepository(context),
+            new EmailService()
+        );
+
+        // Act
+        var resultado = await service.ExcluirAsync(999999);
+
+        // Assert
+        Assert.False(resultado);
+        Assert.Empty(context.Agendamentos);
+    }
+    
+    [Fact]
+    public async Task ExcluirAsync_AgendamentoExistente_ExcluiELiberaHorario()
+    {
+        // Arrange
+        using var context = CriarContexto();
+
+        var horario = new HorarioDisponivel
+        {
+            Id = 1,
+            DataHora = new DateTime(2026, 12, 10, 10, 0, 0),
+            TipoAtendimento = "Consulta",
+            Status = "Ocupado"
+        };
+
+        context.HorariosDisponiveis.Add(horario);
+
+        context.Agendamentos.Add(new Agendamento
+        {
+            Id = 1,
+            HorarioDisponivelId = 1,
+            NomeResponsavel = "Maria",
+            EmailResponsavel = "maria@email.com",
+            NomePet = "Thor",
+            EspeciePet = "Cachorro",
+            Status = "Marcado"
+        });
+
+        await context.SaveChangesAsync();
+
+        var service = new AgendamentoService(
+            new AgendamentoRepository(context),
+            new HorarioRepository(context),
+            new EmailService()
+        );
+
+        // Act
+        var resultado = await service.ExcluirAsync(1);
+
+        // Assert
+        Assert.True(resultado);
+
+        context.ChangeTracker.Clear();
+
+        var agendamentoExcluido = await context.Agendamentos.FindAsync(1);
+        var horarioAtualizado = await context.HorariosDisponiveis.FindAsync(1);
+
+        Assert.Null(agendamentoExcluido);
+        Assert.NotNull(horarioAtualizado);
+        Assert.Equal("Disponivel", horarioAtualizado.Status);
+    }
 }

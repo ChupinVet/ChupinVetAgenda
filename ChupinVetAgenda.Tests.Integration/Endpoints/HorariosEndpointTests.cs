@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Http.Headers;
 using ChupinVetAgenda.Tests.Integration.Fixtures;
 
 namespace ChupinVetAgenda.Tests.Integration.Endpoints;
@@ -8,45 +9,51 @@ public class HorariosEndpointTests
 {
     private readonly IntegrationTestFixture _fixture;
 
-    public HorariosEndpointTests(
-        IntegrationTestFixture fixture)
+    public HorariosEndpointTests(IntegrationTestFixture fixture)
     {
         _fixture = fixture;
+    }
+
+    private HttpClient CriarClienteAutenticado()
+    {
+        var client = _fixture.Factory.CreateClient();
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                TestAuthHandler.Scheme,
+                "usuario-teste"
+            );
+
+        return client;
     }
 
     [Fact]
     public async Task GetHorarios_RequisicaoValida_RetornaOk()
     {
-        // Arrange
-        var client = _fixture.Client;
+        using var client = CriarClienteAutenticado();
 
-        // Act
-        var response =
-            await client.GetAsync("/api/Horarios");
+        var response = await client.GetAsync("/api/Horarios");
 
-        // Assert
-        Assert.Equal(
-            HttpStatusCode.OK,
-            response.StatusCode
-        );
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task GetHorario_IdInexistente_RetornaNotFound()
     {
-        // Arrange
-        var client = _fixture.Client;
+        using var client = CriarClienteAutenticado();
 
-        // Act
-        var response =
-            await client.GetAsync(
-                "/api/Horarios/999999"
-            );
+        var response = await client.GetAsync("/api/Horarios/999999");
 
-        // Assert
-        Assert.Equal(
-            HttpStatusCode.NotFound,
-            response.StatusCode
-        );
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetHorarios_SemAutenticacao_RetornaUnauthorized()
+    {
+        using var client = _fixture.Factory.CreateClient();
+
+        var response = await client.GetAsync("/api/Horarios");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }

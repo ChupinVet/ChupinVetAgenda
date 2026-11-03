@@ -1,11 +1,13 @@
 ﻿using ChupinVetAgenda.Models;
 using ChupinVetAgenda.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ChupinVetAgenda.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class HorariosController : ControllerBase
 {
     private readonly IHorarioService _horarioService;

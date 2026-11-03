@@ -133,10 +133,12 @@ public class AuthServiceTests
         repositoryMock
             .Setup(r => r.BuscarPorEmailAsync(usuario.Email))
             .ReturnsAsync(usuario);
-
+        
         var configuracoes = new Dictionary<string, string?>
         {
-            ["Jwt:Key"] = "ChaveDeTesteJWTComMaisDe32Caracteres123456789"
+            ["Jwt:Key"] = "ChaveDeTesteJWTComMaisDe32Caracteres123456789",
+            ["Jwt:Issuer"] = "ChupinVetAgenda",
+            ["Jwt:Audience"] = "ChupinVetAgendaAPI"
         };
 
         var configuration = new ConfigurationBuilder()
@@ -172,8 +174,10 @@ public class AuthServiceTests
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = chave,
-            ValidateIssuer = false,
-            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidIssuer = configuracoes["Jwt:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = configuracoes["Jwt:Audience"],
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };

@@ -1,4 +1,4 @@
-﻿using ChupinVetAgenda.Data;using ChupinVetAgenda.Models;
+﻿using ChupinVetAgenda.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChupinVetAgenda.Data;

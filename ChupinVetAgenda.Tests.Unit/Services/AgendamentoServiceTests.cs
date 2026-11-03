@@ -4,6 +4,8 @@ using ChupinVetAgenda.Services;
 using ChupinVetAgenda.Services.Exceptions;
 using ChupinVetAgenda.Services.Implementations;
 using Microsoft.EntityFrameworkCore;
+using ChupinVetAgenda.Repositories.Implementations;
+using ChupinVetAgenda.Repositories.Interfaces;
 
 namespace ChupinVetAgenda.Tests.Unit.Services;
 
@@ -34,9 +36,13 @@ public class AgendamentoServiceTests
 
         context.HorariosDisponiveis.Add(horario);
         await context.SaveChangesAsync();
+        
+        var agendamentoRepository = new AgendamentoRepository(context);
+        var horarioRepository = new HorarioRepository(context);
 
         var service = new AgendamentoService(
-            context,
+            agendamentoRepository,
+            horarioRepository,
             new EmailService()
         );
 
@@ -92,9 +98,13 @@ public class AgendamentoServiceTests
         }
 
         await context.SaveChangesAsync();
+        
+        var agendamentoRepository = new AgendamentoRepository(context);
+        var horarioRepository = new HorarioRepository(context);
 
         var service = new AgendamentoService(
-            context,
+            agendamentoRepository,
+            horarioRepository,
             new EmailService()
         );
 
@@ -149,9 +159,13 @@ public class AgendamentoServiceTests
         }
 
         await context.SaveChangesAsync();
+        
+        var agendamentoRepository = new AgendamentoRepository(context);
+        var horarioRepository = new HorarioRepository(context);
 
         var service = new AgendamentoService(
-            context,
+            agendamentoRepository,
+            horarioRepository,
             new EmailService()
         );
 
@@ -205,9 +219,13 @@ public class AgendamentoServiceTests
         }
 
         await context.SaveChangesAsync();
+        
+        var agendamentoRepository = new AgendamentoRepository(context);
+        var horarioRepository = new HorarioRepository(context);
 
         var service = new AgendamentoService(
-            context,
+            agendamentoRepository,
+            horarioRepository,
             new EmailService()
         );
 

@@ -4,57 +4,52 @@ using ChupinVetAgenda.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using ChupinVetAgenda.Services;
 using ChupinVetAgenda.Services.Exceptions;
+using ChupinVetAgenda.Repositories.Interfaces;
 
 namespace ChupinVetAgenda.Services.Implementations;
 
 public class AgendamentoService : IAgendamentoService
 {
-    private readonly AppDbContext _context;
+    
+    private readonly IAgendamentoRepository _agendamentoRepository;
+    private readonly IHorarioRepository _horarioRepository;
     private readonly EmailService _emailService;
 
     public AgendamentoService(
-        AppDbContext context,
+        IAgendamentoRepository agendamentoRepository,
+        IHorarioRepository horarioRepository,
         EmailService emailService)
     {
-        _context = context;
+        _agendamentoRepository = agendamentoRepository;
+        _horarioRepository = horarioRepository;
         _emailService = emailService;
     }
-
+    
     public async Task<List<Agendamento>> ListarTodosAsync()
     {
-        return await _context.Agendamentos
-            .Include(a => a.HorarioDisponivel)
-            .ToListAsync();
+        return await _agendamentoRepository.ListarTodosAsync();
     }
 
     public async Task<Agendamento?> BuscarPorIdAsync(int id)
     {
-        return await _context.Agendamentos
-            .Include(a => a.HorarioDisponivel)
-            .FirstOrDefaultAsync(a => a.Id == id);
+        return await _agendamentoRepository.BuscarPorIdAsync(id);
     }
 
     public async Task<List<Agendamento>> ListarPorResponsavelAsync(string email)
     {
-        return await _context.Agendamentos
-            .Include(a => a.HorarioDisponivel)
-            .Where(a => a.EmailResponsavel == email)
-            .ToListAsync();
+        return await _agendamentoRepository.ListarPorResponsavelAsync(email);
     }
 
     public async Task<List<Agendamento>> ListarVeterinarioAsync()
     {
-        return await _context.Agendamentos
-            .Include(a => a.HorarioDisponivel)
-            .Where(a => a.Status == "Marcado")
-            .ToListAsync();
+        return await _agendamentoRepository.ListarVeterinarioAsync();
     }
     
     
     public async Task<Agendamento> CriarAsync(Agendamento agendamento)
     {
-        var horario = await _context.HorariosDisponiveis
-            .FindAsync(agendamento.HorarioDisponivelId);
+        var horario = await _horarioRepository
+            .BuscarPorIdAsync(agendamento.HorarioDisponivelId);
 
         if (horario == null)
             throw new HorarioNaoEncontradoException();
@@ -64,9 +59,9 @@ public class AgendamentoService : IAgendamentoService
 
         horario.Status = "Ocupado";
 
-        _context.Agendamentos.Add(agendamento);
+        await _agendamentoRepository.AdicionarAsync(agendamento);
 
-        await _context.SaveChangesAsync();
+        await _agendamentoRepository.SalvarAlteracoesAsync();
 
         _emailService.EnviarEmailNovoAgendamento(
             agendamento.NomePet,
@@ -77,13 +72,13 @@ public class AgendamentoService : IAgendamentoService
 
         return agendamento;
     }
-
+    
     public async Task<bool> AtualizarAsync(
         int id,
         Agendamento agendamento)
     {
-        var existente = await _context.Agendamentos
-            .FindAsync(id);
+        var existente = await _agendamentoRepository
+            .BuscarParaAtualizacaoAsync(id);
 
         if (existente == null)
             return false;
@@ -94,32 +89,31 @@ public class AgendamentoService : IAgendamentoService
         existente.EspeciePet = agendamento.EspeciePet;
         existente.Status = agendamento.Status;
 
-        await _context.SaveChangesAsync();
-
-        return true;
-    }
-
-    public async Task<bool> ExcluirAsync(int id)
-    {
-        var agendamento = await _context.Agendamentos
-            .FindAsync(id);
-
-        if (agendamento == null)
-            return false;
-
-        var horario = await _context.HorariosDisponiveis
-            .FindAsync(agendamento.HorarioDisponivelId);
-
-        if (horario != null)
-            horario.Status = "Disponivel";
-
-        _context.Agendamentos.Remove(agendamento);
-
-        await _context.SaveChangesAsync();
+        await _agendamentoRepository.SalvarAlteracoesAsync();
 
         return true;
     }
     
+    public async Task<bool> ExcluirAsync(int id)
+    {
+        var agendamento = await _agendamentoRepository
+            .BuscarParaAtualizacaoAsync(id);
+
+        if (agendamento == null)
+            return false;
+
+        var horario = await _horarioRepository
+            .BuscarPorIdAsync(agendamento.HorarioDisponivelId);
+
+        if (horario != null)
+            horario.Status = "Disponivel";
+
+        _agendamentoRepository.Remover(agendamento);
+
+        await _agendamentoRepository.SalvarAlteracoesAsync();
+
+        return true;
+    }
     
     public async Task<(List<Agendamento> Itens, int Total)> ConsultarAsync(
         int pagina,
@@ -129,58 +123,13 @@ public class AgendamentoService : IAgendamentoService
         string? ordenarPor,
         bool descendente)
     {
-        // Consulta inicial
-        var consulta = _context.Agendamentos
-            .Include(a => a.HorarioDisponivel)
-            .AsNoTracking()
-            .AsQueryable();
-
-        // Filtros
-        if (!string.IsNullOrWhiteSpace(status))
-        {
-            consulta = consulta.Where(a => a.Status == status);
-        }
-
-        if (!string.IsNullOrWhiteSpace(especie))
-        {
-            consulta = consulta.Where(a => a.EspeciePet == especie);
-        }
-
-        // Total de registros antes da paginacao
-        var total = await consulta.CountAsync();
-
-        // Ordenacao
-        consulta = ordenarPor?.ToLowerInvariant() switch
-        {
-            "nomepet" => descendente
-                ? consulta.OrderByDescending(a => a.NomePet)
-                    .ThenBy(a => a.Id)
-                : consulta.OrderBy(a => a.NomePet)
-                    .ThenBy(a => a.Id),
-
-            "nomeresponsavel" => descendente
-                ? consulta.OrderByDescending(a => a.NomeResponsavel)
-                    .ThenBy(a => a.Id)
-                : consulta.OrderBy(a => a.NomeResponsavel)
-                    .ThenBy(a => a.Id),
-
-            "status" => descendente
-                ? consulta.OrderByDescending(a => a.Status)
-                    .ThenBy(a => a.Id)
-                : consulta.OrderBy(a => a.Status)
-                    .ThenBy(a => a.Id),
-
-            _ => descendente
-                ? consulta.OrderByDescending(a => a.Id)
-                : consulta.OrderBy(a => a.Id)
-        };
-
-        // Paginacao
-        var itens = await consulta
-            .Skip((pagina - 1) * tamanhoPagina)
-            .Take(tamanhoPagina)
-            .ToListAsync();
-
-        return (itens, total);
+        return await _agendamentoRepository.ConsultarAsync(
+            pagina,
+            tamanhoPagina,
+            status,
+            especie,
+            ordenarPor,
+            descendente
+        );
     }
 }

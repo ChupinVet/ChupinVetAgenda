@@ -9,6 +9,8 @@ using OpenTelemetry.Trace;
 using ChupinVetAgenda.Services.Interfaces;
 using ChupinVetAgenda.Services.Implementations;
 using ChupinVetAgenda.Middlewares;
+using ChupinVetAgenda.Repositories.Interfaces;
+using ChupinVetAgenda.Repositories.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,6 +75,12 @@ builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
 
 //Services - Horário
 builder.Services.AddScoped<IHorarioService, HorarioService>();
+
+//Repostories - Agendamento
+builder.Services.AddScoped<IAgendamentoRepository, AgendamentoRepository>();
+
+//Repostories - Horário
+builder.Services.AddScoped<IHorarioRepository, HorarioRepository>();
 
 var app = builder.Build();
 

@@ -2,41 +2,40 @@
 using ChupinVetAgenda.Models;
 using ChupinVetAgenda.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using ChupinVetAgenda.Repositories.Interfaces;
 
 namespace ChupinVetAgenda.Services.Implementations;
 
 public class HorarioService : IHorarioService
 {
-    private readonly AppDbContext _context;
+    private readonly IHorarioRepository _horarioRepository;
 
-    public HorarioService(AppDbContext context)
+    public HorarioService(IHorarioRepository horarioRepository)
     {
-        _context = context;
+        _horarioRepository = horarioRepository;
     }
-
+    
     public async Task<List<HorarioDisponivel>> ListarTodosAsync()
     {
-        return await _context.HorariosDisponiveis.ToListAsync();
+        return await _horarioRepository.ListarTodosAsync();
     }
 
     public async Task<List<HorarioDisponivel>> ListarDisponiveisAsync()
     {
-        return await _context.HorariosDisponiveis
-            .Where(h => h.Status == "Disponivel")
-            .ToListAsync();
+        return await _horarioRepository.ListarDisponiveisAsync();
     }
 
     public async Task<HorarioDisponivel?> BuscarPorIdAsync(int id)
     {
-        return await _context.HorariosDisponiveis.FindAsync(id);
+        return await _horarioRepository.BuscarPorIdAsync(id);
     }
-
+    
     public async Task<HorarioDisponivel> CriarAsync(
         HorarioDisponivel horario)
     {
-        _context.HorariosDisponiveis.Add(horario);
+        await _horarioRepository.AdicionarAsync(horario);
 
-        await _context.SaveChangesAsync();
+        await _horarioRepository.SalvarAlteracoesAsync();
 
         return horario;
     }
@@ -45,7 +44,7 @@ public class HorarioService : IHorarioService
         int id,
         HorarioDisponivel horario)
     {
-        var existente = await _context.HorariosDisponiveis.FindAsync(id);
+        var existente = await _horarioRepository.BuscarPorIdAsync(id);
 
         if (existente == null)
             return false;
@@ -54,28 +53,28 @@ public class HorarioService : IHorarioService
         existente.TipoAtendimento = horario.TipoAtendimento;
         existente.Status = horario.Status;
 
-        await _context.SaveChangesAsync();
+        await _horarioRepository.SalvarAlteracoesAsync();
 
         return true;
     }
 
     public async Task<bool> ExcluirAsync(int id)
     {
-        var horario = await _context.HorariosDisponiveis.FindAsync(id);
+        var horario = await _horarioRepository.BuscarPorIdAsync(id);
 
         if (horario == null)
             return false;
 
-        var possuiAgendamento = await _context.Agendamentos
-            .AnyAsync(a => a.HorarioDisponivelId == id);
+        var possuiAgendamento =
+            await _horarioRepository.PossuiAgendamentoAsync(id);
 
         if (possuiAgendamento)
             throw new InvalidOperationException(
                 "Nao e possivel remover um horario ocupado.");
 
-        _context.HorariosDisponiveis.Remove(horario);
+        _horarioRepository.Remover(horario);
 
-        await _context.SaveChangesAsync();
+        await _horarioRepository.SalvarAlteracoesAsync();
 
         return true;
     }

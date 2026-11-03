@@ -2,6 +2,7 @@
 using ChupinVetAgenda.Models;
 using ChupinVetAgenda.Services.Implementations;
 using Microsoft.EntityFrameworkCore;
+using ChupinVetAgenda.Repositories.Implementations;
 
 namespace ChupinVetAgenda.Tests.Unit.Services;
 
@@ -46,7 +47,9 @@ public class HorarioServiceTests
 
         await context.SaveChangesAsync();
 
-        var service = new HorarioService(context);
+        var horarioRepository = new HorarioRepository(context);
+
+        var service = new HorarioService(horarioRepository);
 
         // Act e Assert
         var excecao = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -58,7 +61,7 @@ public class HorarioServiceTests
             excecao.Message
         );
 
-        // Verifica se o horario continua no banco
+        // verifica se o horario continua no banco
         Assert.NotNull(
             await context.HorariosDisponiveis.FindAsync(1)
         );

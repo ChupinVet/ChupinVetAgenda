@@ -412,4 +412,34 @@ public class AgendamentoServiceTests
         Assert.NotNull(horarioAtualizado);
         Assert.Equal("Disponivel", horarioAtualizado.Status);
     }
+    
+    [Fact]
+    public async Task CriarAsync_HorarioInexistente_LancaExcecao()
+    {
+        // Arrange
+        using var context = CriarContexto();
+
+        var service = new AgendamentoService(
+            new AgendamentoRepository(context),
+            new HorarioRepository(context),
+            new EmailService()
+        );
+
+        var agendamento = new Agendamento
+        {
+            HorarioDisponivelId = 999999,
+            NomeResponsavel = "Maria",
+            EmailResponsavel = "maria@email.com",
+            NomePet = "Mel",
+            EspeciePet = "Gato",
+            Status = "Marcado"
+        };
+
+        // Act e Assert
+        await Assert.ThrowsAsync<HorarioNaoEncontradoException>(
+            () => service.CriarAsync(agendamento)
+        );
+
+        Assert.Empty(context.Agendamentos);
+    }
 }

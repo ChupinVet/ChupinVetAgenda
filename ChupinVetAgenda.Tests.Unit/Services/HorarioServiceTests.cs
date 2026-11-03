@@ -189,4 +189,38 @@ public class HorarioServiceTests
         Assert.Equal(horarioAtualizado.TipoAtendimento, horarioSalvo.TipoAtendimento);
         Assert.Equal(horarioAtualizado.Status, horarioSalvo.Status);
     }
+    
+    [Fact]
+    public async Task CriarAsync_HorarioValido_SalvaERetornaHorario()
+    {
+        // Arrange
+        using var context = CriarContexto();
+
+        var horarioRepository = new HorarioRepository(context);
+        var service = new HorarioService(horarioRepository);
+
+        var horario = new HorarioDisponivel
+        {
+            DataHora = new DateTime(2026, 11, 25, 10, 0, 0),
+            TipoAtendimento = "Consulta",
+            Status = "Disponivel"
+        };
+
+        // Act
+        var resultado = await service.CriarAsync(horario);
+
+        // Assert
+        Assert.NotNull(resultado);
+        Assert.True(resultado.Id > 0);
+
+        context.ChangeTracker.Clear();
+
+        var horarioSalvo =
+            await context.HorariosDisponiveis.FindAsync(resultado.Id);
+
+        Assert.NotNull(horarioSalvo);
+        Assert.Equal(horario.DataHora, horarioSalvo.DataHora);
+        Assert.Equal(horario.TipoAtendimento, horarioSalvo.TipoAtendimento);
+        Assert.Equal(horario.Status, horarioSalvo.Status);
+    }
 }

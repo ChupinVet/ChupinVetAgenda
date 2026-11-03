@@ -1,16 +1,22 @@
 using ChupinVetAgenda.Data;
 using ChupinVetAgenda.Services;
 using ChupinVetAgenda.HealthChecks;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using ChupinVetAgenda.Services.Interfaces;
 using ChupinVetAgenda.Services.Implementations;
 using ChupinVetAgenda.Middlewares;
 using ChupinVetAgenda.Repositories.Interfaces;
 using ChupinVetAgenda.Repositories.Implementations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using System.Text;
+using ChupinVetAgenda.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +32,30 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
+
+// JWT
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException(
+        "A chave JWT nao foi configurada.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey)
+            ),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // OpenTelemetry
 builder.Services.AddOpenTelemetry()
@@ -48,9 +78,9 @@ builder.Services.AddOpenTelemetry()
 
 // EF Core + Oracle
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseOracle(builder.Configuration.GetConnectionString(
-        "OracleConnection"
-        ))
+    options.UseOracle(
+        builder.Configuration.GetConnectionString("OracleConnection")
+    )
 );
 
 // Health Checks
@@ -60,27 +90,62 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("Oracle")
     .AddCheck<ExternalServiceHealthCheck>("ServicoExterno");
 
-//Controllers
+// Controllers
 builder.Services.AddControllers();
 
-//Swagger
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.OrderActionsBy(api =>
+    {
+        var controller = api.ActionDescriptor.RouteValues["controller"];
 
-//Email
+        var prioridade = controller switch
+        {
+            "Auth" => "0",
+            "Agendamentos" => "1",
+            "Horarios" => "2",
+            _ => "9"
+        };
+
+        return prioridade + "_" + api.RelativePath;
+    });
+    
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Informe o token JWT gerado no login."
+    });
+    
+    options.AddSecurityRequirement(document =>
+        new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", document)] =
+                new List<string>()
+        });
+});
+
+// Email
 builder.Services.AddScoped<EmailService>();
 
-//Services - Agendamento
+// Services
 builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
-
-//Services - Horário
 builder.Services.AddScoped<IHorarioService, HorarioService>();
 
-//Repostories - Agendamento
-builder.Services.AddScoped<IAgendamentoRepository, AgendamentoRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
-//Repostories - Horário
+builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
+
+
+// Repositories
+builder.Services.AddScoped<IAgendamentoRepository, AgendamentoRepository>();
 builder.Services.AddScoped<IHorarioRepository, HorarioRepository>();
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
 var app = builder.Build();
 
@@ -90,8 +155,9 @@ app.UseMiddleware<ExceptionMiddleware>();
 // Correlation ID
 app.Use(async (context, next) =>
 {
-    var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault()
-                        ?? Guid.NewGuid().ToString();
+    var correlationId =
+        context.Request.Headers["X-Correlation-ID"].FirstOrDefault()
+        ?? Guid.NewGuid().ToString();
 
     context.Response.Headers["X-Correlation-ID"] = correlationId;
 
@@ -105,7 +171,7 @@ app.Use(async (context, next) =>
 // Logging das requisições
 app.UseSerilogRequestLogging();
 
-//Swagger
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -114,8 +180,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapControllers();
+// Autenticação e autorização JWT
+app.UseAuthentication();
+app.UseAuthorization();
 
+// Endpoints
+app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();

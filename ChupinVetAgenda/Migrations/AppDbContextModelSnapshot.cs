@@ -84,6 +84,34 @@ namespace ChupinVetAgenda.Migrations
                     b.ToTable("HorariosDisponiveis");
                 });
 
+            modelBuilder.Entity("ChupinVetAgenda.Models.Usuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("NUMBER(10)");
+
+                    OraclePropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("NVARCHAR2(450)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.Property<string>("SenhaHash")
+                        .IsRequired()
+                        .HasColumnType("NVARCHAR2(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Usuarios");
+                });
+
             modelBuilder.Entity("ChupinVetAgenda.Models.Agendamento", b =>
                 {
                     b.HasOne("ChupinVetAgenda.Models.HorarioDisponivel", "HorarioDisponivel")

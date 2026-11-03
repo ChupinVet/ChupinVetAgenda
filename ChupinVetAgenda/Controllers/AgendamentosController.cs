@@ -2,11 +2,13 @@
 using ChupinVetAgenda.Services.Interfaces;
 using ChupinVetAgenda.Services.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ChupinVetAgenda.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AgendamentosController : ControllerBase
 {
     private readonly IAgendamentoService _agendamentoService;

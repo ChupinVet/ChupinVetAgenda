@@ -8,5 +8,5 @@ public class HorarioDisponivel
 
     public string TipoAtendimento { get; set; } = string.Empty;
 
-    public string Status { get; set; } = "Dsiponível";
+    public string Status { get; set; } = "Disponivel";
 }
